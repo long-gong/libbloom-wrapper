@@ -1,8 +1,0 @@
-README
-pybf.cpp
-pybf.py
-setup.py
-libbloom_wrapper.egg-info/PKG-INFO
-libbloom_wrapper.egg-info/SOURCES.txt
-libbloom_wrapper.egg-info/dependency_links.txt
-libbloom_wrapper.egg-info/top_level.txt
