@@ -232,6 +232,6 @@ install: $(BUILD)/$(SO_VERSIONED) $(BUILD)/libbloom.a
 	@python3 ./setup.py install --user 
 	@echo Python wrapper installation completed
 	@echo Installing C++ wrapper 
-	@(INSTALL_DATA) BitUtil.h $(DESTDIR)$(INCLUDEDIR)
-	@(INSTALL_DATA) BloomFilter.h $(DESTDIR)$(INCLUDEDIR)
+	@$(INSTALL_DATA) BitUtil.h $(DESTDIR)$(INCLUDEDIR)
+	@$(INSTALL_DATA) BloomFilter.h $(DESTDIR)$(INCLUDEDIR)
 	@echo C++ wrapper installation completed
