@@ -28,7 +28,7 @@ BLOOM_VERSION=$(BLOOM_VERSION_MAJOR).$(BLOOM_VERSION_MINOR)
 TOP := $(shell /bin/pwd)
 BUILD_OS := $(shell uname)
 
-BUILD=$(TOP)/build
+BUILD=$(TOP)/lib
 INC=-I$(TOP) -I$(TOP)/murmur2
 LIB=-lm
 COM=${CC} $(CFLAGS) $(CPPFLAGS) -Wall ${OPT} ${MM} -std=c99 -fPIC -DBLOOM_VERSION=$(BLOOM_VERSION)
@@ -87,7 +87,7 @@ OPT=-O3
 endif
 
 
-all: $(BUILD)/$(SO_VERSIONED) $(BUILD)/libbloom.a
+all: $(BUILD)/$(SO_VERSIONED) $(BUILD)/libbloom.a example wrapper_example
 
 $(BUILD)/$(SO_VERSIONED): $(BUILD)/murmurhash2.o $(BUILD)/bloom.o
 	(cd $(BUILD) && \
@@ -120,6 +120,15 @@ $(BUILD)/%.o: %.c
 $(BUILD)/murmurhash2.o: murmur2/MurmurHash2.c murmur2/murmurhash2.h
 	mkdir -p $(BUILD)
 	$(COM) $(INC) -c murmur2/MurmurHash2.c -o $(BUILD)/murmurhash2.o
+
+
+example: example/example.cc $(BUILD)/libbloom.a
+	$(CXX) example/example.cc -o $(BUILD)/example -Wall -L$(BUILD) -lbloom
+
+
+wrapper_example: example/wrapper_example.cc $(BUILD)/libbloom.a
+	$(CXX) example/wrapper_example.cc -o $(BUILD)/wrapper_example -Wall -I$(TOP) -L$(BUILD) -lbloom
+
 
 clean:
 	rm -rf $(BUILD)
@@ -179,3 +188,50 @@ release_test:
 	    | tee short_coll_data
 	gzip short_coll_data
 	./misc/collisions/dograph short_coll_data.gz
+
+
+DESTDIR     ?=
+# directory variables: GNU conventions prefer lowercase
+# see https://www.gnu.org/prep/standards/html_node/Makefile-Conventions.html
+# support both lower and uppercase (BSD), use uppercase in script
+prefix      ?= /usr/local
+PREFIX      ?= $(prefix)
+exec_prefix ?= $(PREFIX)
+libdir      ?= $(exec_prefix)/lib
+LIBDIR      ?= $(libdir)
+includedir  ?= $(PREFIX)/include
+INCLUDEDIR  ?= $(includedir)
+bindir      ?= $(exec_prefix)/bin
+BINDIR      ?= $(bindir)
+datarootdir ?= $(PREFIX)/share
+mandir      ?= $(datarootdir)/man
+man1dir     ?= $(mandir)/man1
+
+ifneq (,$(filter $(shell uname),SunOS))
+INSTALL ?= ginstall
+else
+INSTALL ?= install
+endif
+
+INSTALL_PROGRAM ?= $(INSTALL)
+INSTALL_DATA    ?= $(INSTALL) -m 644
+
+.PHONY: install
+install: $(BUILD)/$(SO_VERSIONED) $(BUILD)/libbloom.a
+	@echo Installing libbloom
+	@$(INSTALL) -d -m 755 $(DESTDIR)$(LIBDIR)
+	@$(INSTALL_DATA) $(BUILD)/libbloom.a $(DESTDIR)$(LIBDIR)
+	@$(INSTALL_PROGRAM) $(BUILD)/$(SO_VERSIONED) $(DESTDIR)$(LIBDIR)
+	@$(INSTALL_PROGRAM) $(BUILD)/libbloom.so $(DESTDIR)$(LIBDIR)
+	@$(INSTALL_PROGRAM) $(BUILD)/libbloom.so.1 $(DESTDIR)$(LIBDIR)
+	@$(INSTALL) -d -m 755 $(DESTDIR)$(INCLUDEDIR)   # includes
+	@$(INSTALL_DATA) bloom.h $(DESTDIR)$(INCLUDEDIR)
+	@$(INSTALL_DATA) murmur2/murmurhash2.h $(DESTDIR)$(INCLUDEDIR)
+	@echo libbloom installation completed
+	@echo Installing Python wrapper 
+	@python3 ./setup.py install --user 
+	@echo Python wrapper installation completed
+	@echo Installing C++ wrapper 
+	@(INSTALL_DATA) BitUtil.h $(DESTDIR)$(INCLUDEDIR)
+	@(INSTALL_DATA) BloomFilter.h $(DESTDIR)$(INCLUDEDIR)
+	@echo C++ wrapper installation completed

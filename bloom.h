@@ -36,6 +36,13 @@ struct bloom
   double bpe;
   unsigned char * bf;
   int ready;
+
+  // Fields added by Long
+  unsigned int hashSeed;
+
+  #ifdef COUNTING_SET_BITS_ON
+  unsigned int num_set_bits;
+  #endif 
 };
 
 
@@ -68,6 +75,31 @@ struct bloom
  */
 int bloom_init(struct bloom * bloom, int entries, double error);
 
+
+/** ***************************************************************************
+ * Initialize the bloom filter for use (without allocating space for the `bf` field)
+ *
+ * The filter is initialized with a bit field and number of hash functions
+ * according to the computations from the wikipedia entry:
+ *     http://en.wikipedia.org/wiki/Bloom_filter
+ *
+ * Optimal number of bits is:
+ *     bits = (entries * ln(error)) / ln(2)^2
+ *
+ * Optimal number of hash functions is:
+ *     hashes = bpe * ln(2)
+ *
+ * Parameters:
+ * -----------
+ *     bloom   - Pointer to an allocated struct bloom (see above).
+ *     entries - The expected number of entries which will be inserted.
+ *               Must be at least 1000 (in practice, likely much larger).
+ *     error   - Probability of collision (as long as entries are not
+ *               exceeded).
+ *
+ *
+ */
+void bloom_init_wo_allocation(struct bloom * bloom, int entries, double error);
 
 /** ***************************************************************************
  * Deprecated, use bloom_init()

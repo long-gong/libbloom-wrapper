@@ -1,1 +1,7 @@
 build
+lib
+__pycache__
+.vscode
+.idea
+
+*.so
