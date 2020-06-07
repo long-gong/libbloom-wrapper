@@ -33,7 +33,7 @@ uint64_t get_current_time_millis()
   return (tp.tv_sec * 1000L) + (tp.tv_usec / 1000L);
 }
 
-void add_and_test(int entries, double error, uint64_t count,
+void add_and_test(size_t entries, double error, uint64_t count,
                   char test_known_added)
 {
   struct bloom bloom;
@@ -71,7 +71,7 @@ void add_and_test(int entries, double error, uint64_t count,
 
   double pct = (double)collisions / (double)entries;
 
-  printf("add_and_test: %10d (%1.4f): %8d collisions (%1.4f), %10" PRIu64
+  printf("add_and_test: %10lu (%1.4f): %8d collisions (%1.4f), %10" PRIu64
          " found; ADD: %6" PRIu64 " ms, CHECK: %6" PRIu64 " ms\n",
          entries, error, collisions, pct, found, (t2-t1), (t3-t2));
 }
@@ -99,6 +99,11 @@ void basic()
   n = 10000000;
   add_and_test(n, 0.001, n, 1);
   add_and_test(n, 0.001, n, 0);
+
+  size_t large_n = 2147483647lu + 100000lu;
+  n = 1000000;
+  add_and_test(large_n, 0.001, n, 1);
+  add_and_test(large_n, 0.001, n, 0);
 }
 
 

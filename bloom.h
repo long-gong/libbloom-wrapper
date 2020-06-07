@@ -8,10 +8,11 @@
 #ifndef _BLOOM_H
 #define _BLOOM_H
 
+#include "stdlib.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 /** ***************************************************************************
  * Structure to keep track of one bloom filter.  Caller needs to
@@ -19,32 +20,30 @@ extern "C" {
  * every struct must be to bloom_init().
  *
  */
-struct bloom
-{
+struct bloom {
   // These fields are part of the public interface of this structure.
   // Client code may read these values if desired. Client code MUST NOT
   // modify any of these.
-  int entries;
+  size_t entries;
   double error;
-  int bits;
-  int bytes;
+  size_t bits;
+  size_t bytes;
   int hashes;
 
   // Fields below are private to the implementation. These may go away or
   // change incompatibly at any moment. Client code MUST NOT access or rely
   // on these.
   double bpe;
-  unsigned char * bf;
+  unsigned char *bf;
   int ready;
 
   // Fields added by Long
   unsigned int hashSeed;
 
-  #ifdef COUNTING_SET_BITS_ON
-  unsigned int num_set_bits;
-  #endif 
+#ifdef COUNTING_SET_BITS_ON
+  size_t num_set_bits;
+#endif
 };
-
 
 /** ***************************************************************************
  * Initialize the bloom filter for use.
@@ -73,11 +72,11 @@ struct bloom
  *     1 - on failure
  *
  */
-int bloom_init(struct bloom * bloom, int entries, double error);
-
+int bloom_init(struct bloom *bloom, size_t entries, double error);
 
 /** ***************************************************************************
- * Initialize the bloom filter for use (without allocating space for the `bf` field)
+ * Initialize the bloom filter for use (without allocating space for the `bf`
+ * field)
  *
  * The filter is initialized with a bit field and number of hash functions
  * according to the computations from the wikipedia entry:
@@ -99,15 +98,15 @@ int bloom_init(struct bloom * bloom, int entries, double error);
  *
  *
  */
-void bloom_init_wo_allocation(struct bloom * bloom, int entries, double error);
+void bloom_init_wo_allocation(struct bloom *bloom, size_t entries,
+                              double error);
 
 /** ***************************************************************************
  * Deprecated, use bloom_init()
  *
  */
-int bloom_init_size(struct bloom * bloom, int entries, double error,
+int bloom_init_size(struct bloom *bloom, size_t entries, double error,
                     unsigned int cache_size);
-
 
 /** ***************************************************************************
  * Check if the given element is in the bloom filter. Remember this may
@@ -126,8 +125,7 @@ int bloom_init_size(struct bloom * bloom, int entries, double error,
  *    -1 - bloom not initialized
  *
  */
-int bloom_check(struct bloom * bloom, const void * buffer, int len);
-
+int bloom_check(struct bloom *bloom, const void *buffer, int len);
 
 /** ***************************************************************************
  * Add the given element to the bloom filter.
@@ -147,15 +145,13 @@ int bloom_check(struct bloom * bloom, const void * buffer, int len);
  *    -1 - bloom not initialized
  *
  */
-int bloom_add(struct bloom * bloom, const void * buffer, int len);
-
+int bloom_add(struct bloom *bloom, const void *buffer, int len);
 
 /** ***************************************************************************
  * Print (to stdout) info about this bloom filter. Debugging aid.
  *
  */
-void bloom_print(struct bloom * bloom);
-
+void bloom_print(struct bloom *bloom);
 
 /** ***************************************************************************
  * Deallocate internal storage.
@@ -170,7 +166,7 @@ void bloom_print(struct bloom * bloom);
  * Return: none
  *
  */
-void bloom_free(struct bloom * bloom);
+void bloom_free(struct bloom *bloom);
 
 /** ***************************************************************************
  * Erase internal storage.
@@ -187,8 +183,7 @@ void bloom_free(struct bloom * bloom);
  *     1 - on failure
  *
  */
-int bloom_reset(struct bloom * bloom);
-
+int bloom_reset(struct bloom *bloom);
 
 /** ***************************************************************************
  * Returns version string compiled into library.
@@ -196,7 +191,7 @@ int bloom_reset(struct bloom * bloom);
  * Return: version string
  *
  */
-const char * bloom_version();
+const char *bloom_version();
 
 #ifdef __cplusplus
 }

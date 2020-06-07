@@ -29,9 +29,9 @@ TOP := $(shell /bin/pwd)
 BUILD_OS := $(shell uname)
 
 BUILD=$(TOP)/lib
-INC=-I$(TOP) -I$(TOP)/murmur2
-LIB=-lm
-COM=${CC} $(CFLAGS) $(CPPFLAGS) -Wall ${OPT} ${MM} -std=c99 -fPIC -DBLOOM_VERSION=$(BLOOM_VERSION)
+INC=-I$(TOP) -I$(TOP)/murmur2 -I$(TOP)/wyhash
+LIB=-lm 
+COM=${CC} $(CFLAGS) $(CPPFLAGS) -Wall ${OPT} ${MM} -std=c99 -fPIC -DBLOOM_VERSION=$(BLOOM_VERSION) 
 TESTDIR=$(TOP)/misc/test
 
 ifeq ($(BITS),)
@@ -102,12 +102,12 @@ $(BUILD)/libbloom.a: $(BUILD)/murmurhash2.o $(BUILD)/bloom.o
 $(BUILD)/test-libbloom: $(TESTDIR)/test.c $(BUILD)/$(SO_VERSIONED)
 	$(COM) -I$(TOP) -c $(TESTDIR)/test.c -o $(BUILD)/test.o
 	(cd $(BUILD) && \
-	    $(COM) test.o -L$(BUILD) $(RPATH) -lbloom -o test-libbloom)
+	    $(COM) test.o -L$(BUILD) $(RPATH) -lbloom $(LIB) -o test-libbloom)
 
 $(BUILD)/test-perf: $(TESTDIR)/perf.c $(BUILD)/$(SO_VERSIONED)
 	$(COM) -I$(TOP) -c $(TESTDIR)/perf.c -o $(BUILD)/perf.o
 	(cd $(BUILD) && \
-	    $(COM) perf.o -L$(BUILD) $(RPATH) -lbloom -o test-perf)
+	    $(COM) perf.o -L$(BUILD) $(RPATH) -lbloom $(LIB) -o test-perf)
 
 $(BUILD)/test-basic: $(TESTDIR)/basic.c $(BUILD)/libbloom.a
 	$(COM) -I$(TOP) \

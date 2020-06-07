@@ -34,6 +34,7 @@ static int basic()
 
   struct bloom bloom;
 
+  printf("%d\n", bloom_init(&bloom, 0, 1.0));
   assert(bloom_init(&bloom, 0, 1.0) == 1);
   assert(bloom_init(&bloom, 10, 0) == 1);
   assert(bloom.ready == 0);
@@ -109,10 +110,10 @@ static int add_random(int entries, double error, int count,
 
   if (!quiet) {
     printf("entries: %d, error: %f, count: %d, coll: %d, error: %f, "
-           "bytes: %d\n",
+           "bytes: %lu\n",
            entries, error, count, collisions, er, bloom.bytes);
   } else {
-    printf("%d %f %d %d %f %d\n",
+    printf("%d %f %d %d %f %lu\n",
            entries, error, count, collisions, er, bloom.bytes);
   }
 
@@ -165,7 +166,7 @@ static int perf_loop(int entries, int count)
   printf("Added %d elements of size %d, took %d ms (collisions=%d)\n",
          count, (int)sizeof(int), (int)(after - before), collisions);
 
-  printf("%d,%d,%ld\n", entries, bloom.bytes, after - before);
+  printf("%d,%lu,%ld\n", entries, bloom.bytes, after - before);
 
   bloom_print(&bloom);
   bloom_free(&bloom);

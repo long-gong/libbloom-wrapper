@@ -21,16 +21,26 @@
 #include <unistd.h>
 
 #include "bloom.h"
+
+#if defined(USE_XXHASH)
+#include <xxhash.h>
+#define HASH_FN(key, len, seed) XXH64(key, len, seed)
+#elif defined(USE_WYHASH)
+#include <wyhash.h>
+#define HASH_FN(key, len, seed) wyhash(key, len, seed, _wyp)
+#else
 #include "murmurhash2.h"
+#define HASH_FN(key, len, seed) murmurhash2(key, len, seed)
+#endif
 
 #define MAKESTRING(n) STRING(n)
 #define STRING(n) #n
 
 inline static int test_bit_set_bit(unsigned char *buf, unsigned int x,
                                    int set_bit) {
-  unsigned int byte = x >> 3;
+  size_t byte = (size_t)x >> 3u;
   unsigned char c = buf[byte]; // expensive memory access
-  unsigned int mask = 1 << (x % 8);
+  unsigned int mask = 1u << (x % 8);
 
   if (c & mask) {
     return 1;
@@ -50,10 +60,9 @@ static int bloom_check_add(struct bloom *bloom, const void *buffer, int len,
   }
 
   int hits = 0;
-  // register unsigned int a = murmurhash2(buffer, len, 0x9747b28c);
-  register unsigned int a = murmurhash2(buffer, len, bloom->hashSeed);
-  register unsigned int b = murmurhash2(buffer, len, a);
-  register unsigned int x;
+  register size_t a = HASH_FN(buffer, len, bloom->hashSeed);
+  register size_t b = HASH_FN(buffer, len, a);
+  register size_t x;
   register unsigned int i;
 
   for (i = 0; i < bloom->hashes; i++) {
@@ -77,16 +86,14 @@ static int bloom_check_add(struct bloom *bloom, const void *buffer, int len,
   return 0;
 }
 
-int bloom_init_size(struct bloom *bloom, int entries, double error,
+int bloom_init_size(struct bloom *bloom, size_t entries, double error,
                     unsigned int cache_size) {
   return bloom_init(bloom, entries, error);
 }
 
-
 // added by Long
-void bloom_init_wo_allocation(struct bloom * bloom, int entries, double error) {
-  bloom->ready = 0;
-
+void bloom_init_wo_allocation(struct bloom *bloom, size_t entries,
+                              double error) {
   bloom->entries = entries;
   bloom->error = error;
 
@@ -95,7 +102,7 @@ void bloom_init_wo_allocation(struct bloom * bloom, int entries, double error) {
   bloom->bpe = -(num / denom);
 
   double dentries = (double)entries;
-  bloom->bits = (int)(dentries * bloom->bpe);
+  bloom->bits = (size_t)ceil(dentries * bloom->bpe);
 
   if (bloom->bits % 8) {
     bloom->bytes = (bloom->bits / 8) + 1;
@@ -111,11 +118,18 @@ void bloom_init_wo_allocation(struct bloom * bloom, int entries, double error) {
 #endif
 }
 
-int bloom_init(struct bloom *bloom, int entries, double error) {
+int bloom_init(struct bloom *bloom, size_t entries, double error) {
+  printf("entries = %lu, error = %.8f\n", entries, error);
+  bloom->ready = 0;
+  if (!(entries > 0 && error > 0 && error < 1.0))
+    return 1;
   bloom_init_wo_allocation(bloom, entries, error);
   // allocating space
   bloom->bf = (unsigned char *)calloc(bloom->bytes, sizeof(unsigned char));
   if (bloom->bf == NULL) { // LCOV_EXCL_START
+    printf("memory allocation failed, while trying to calloc %lu bytes of "
+           "memory!\n",
+           bloom->bytes);
     return 1;
   } // LCOV_EXCL_STOP
 
@@ -134,12 +148,20 @@ int bloom_add(struct bloom *bloom, const void *buffer, int len) {
 
 void bloom_print(struct bloom *bloom) {
   printf("bloom at %p\n", (void *)bloom);
-  printf(" ->entries = %d\n", bloom->entries);
+  printf(" ->entries = %lu\n", bloom->entries);
   printf(" ->error = %f\n", bloom->error);
-  printf(" ->bits = %d\n", bloom->bits);
+  printf(" ->bits = %lu\n", bloom->bits);
   printf(" ->bits per elem = %f\n", bloom->bpe);
-  printf(" ->bytes = %d\n", bloom->bytes);
+  printf(" ->bytes = %lu\n", bloom->bytes);
   printf(" ->hash functions = %d\n", bloom->hashes);
+#ifdef USE_XXHASH
+  const char *hash_fn = "XXHASH";
+#elif defined(USE_WYHASH)
+  const char *hash_fn = "WYHASH";
+#else
+  const char *hash_fn = "MURMURHASH";
+#endif
+  printf(" ->hash function type = %s\n", hash_fn);
 }
 
 void bloom_free(struct bloom *bloom) {
@@ -155,7 +177,7 @@ int bloom_reset(struct bloom *bloom) {
   memset(bloom->bf, 0, bloom->bytes);
 #ifdef COUNTING_SET_BITS_ON
   bloom.num_set_bits = 0;
-#endif  
+#endif
   return 0;
 }
 
