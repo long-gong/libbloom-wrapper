@@ -1,1 +1,0 @@
-/usr/bin/c++  -g  -rdynamic CMakeFiles/bf_example.dir/example.cpp.o  -o bf_example  liblibbloom.a 

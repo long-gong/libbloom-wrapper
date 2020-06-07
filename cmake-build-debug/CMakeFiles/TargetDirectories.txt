@@ -1,4 +1,0 @@
-/media/saber/easystore/GitHub/libbloom-wrapper/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/media/saber/easystore/GitHub/libbloom-wrapper/cmake-build-debug/CMakeFiles/edit_cache.dir
-/media/saber/easystore/GitHub/libbloom-wrapper/cmake-build-debug/CMakeFiles/bf_example.dir
-/media/saber/easystore/GitHub/libbloom-wrapper/cmake-build-debug/CMakeFiles/libbloom.dir
