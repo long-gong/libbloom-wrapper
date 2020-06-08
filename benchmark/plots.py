@@ -60,7 +60,7 @@ def fpr_plots(csvfile, filter_key, filter_value):
         )
     plt.ylabel("False Positive Rate")
     plt.xlabel("Number of Inserted Items (million)")
-    plt.xticks(ind + width, ("1", "5", "10", "20", "50", "100"))
+    plt.xticks(ind + width, ("1", "2", "5", "10", "20", "50", "100"))
     plt.legend(
         bbox_to_anchor=(0.0, 1.02, 1.0, 0.102),
         loc="lower left",
