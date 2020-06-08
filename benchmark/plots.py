@@ -18,10 +18,21 @@ SHORT_LIB_NAMES = {
 }
 MYDPI = 100
 BAR_WIDTH = 0.2
+GEN_MD = True
 
 
 def fpr_str2num(fpr_str):
     return float(fpr_str[:-1]) / 100.0
+
+
+def simplify_fpr_str(fpr_str):
+    import re
+
+    last_ch = re.findall(r"[^0.%]", fpr_str)[-1]
+    sep1 = fpr_str.rfind(last_ch) + 1
+    sep2 = fpr_str.find(".")
+    sep = sep1 if sep1 > sep2 else sep2
+    return fpr_str[:sep] + "%"
 
 
 def get_bench_keytype(bench_result_filename):
@@ -61,6 +72,12 @@ def fpr_plots(csvfile, filter_key, filter_value):
     if not os.path.exists(plot_dir):
         os.makedirs(plot_dir)
     plt.savefig(f"{plot_dir}/fpr_{figid}.svg", format="svg", dpi=100)
+    if GEN_MD:
+        return "+ desired fpr = %s\n\t![false positive rate %i](%s)" % (
+            simplify_fpr_str(filter_value),
+            figid,
+            f"{plot_dir}/fpr_{figid}.svg",
+        )
 
 
 def constr_speed_plots(csvfile, filter_key, filter_value):
@@ -96,6 +113,12 @@ def constr_speed_plots(csvfile, filter_key, filter_value):
         os.makedirs(plot_dir)
 
     plt.savefig(f"{plot_dir}/constr_speed_{figid}.svg", format="svg", dpi=100)
+    if GEN_MD:
+        return (
+            "+ %.0f millions (items inserted during construction)\n\t![construction speed %i](%s)"
+            % (filter_value, figid, f"{plot_dir}/constr_speed_{figid}.svg")
+        )
+
 
 def check_speed_plots(csvfile, filter_key, filter_value):
     FIGSIZE = (15.63, 9.00)
@@ -130,6 +153,12 @@ def check_speed_plots(csvfile, filter_key, filter_value):
         os.makedirs(plot_dir)
 
     plt.savefig(f"{plot_dir}/check_speed_{figid}.svg", format="svg", dpi=100)
+    if GEN_MD:
+        return (
+            "+ %.0f millions (items inserted during construction)\n\t![check speed %i](%s)"
+            % (filter_value, figid, f"{plot_dir}/check_speed_{figid}.svg")
+        )
+
 
 def space_plots(csvfile, filter_key, filter_value):
     FIGSIZE = (15.63, 9.00)
@@ -164,19 +193,52 @@ def space_plots(csvfile, filter_key, filter_value):
         os.makedirs(plot_dir)
 
     plt.savefig(f"{plot_dir}/space_{figid}.svg", format="svg", dpi=100)
+    if GEN_MD:
+        return (
+            "+ %.0f millions (items inserted during construction)\n\t![space %i](%s)"
+            % (filter_value, figid, f"space_{figid}.svg")
+        )
+
 
 if __name__ == "__main__":
+    import warnings
+
+    warnings.simplefilter("ignore")
     res_filenames = [
         "./raw_results/benchmark_results_64u.csv",
         "./raw_results/benchmark_results_32u.csv",
     ]
+    metrics = ["false positive rate", "construction speed", "check speed", "space"]
+
     for res_filename in res_filenames:
+        MD = dict(zip(metrics, [[] for _ in metrics]))
         df = pd.read_csv(res_filename)
         diff_dfprs = set(df["desired fpr"].tolist())
         for dfpr in diff_dfprs:
-            fpr_plots(res_filename, "desired fpr", dfpr)
+            MD["false positive rate"].append(
+                (float(dfpr[:-1]), fpr_plots(res_filename, "desired fpr", dfpr))
+            )
         diff_inserted = set(df["# of items (million)"].tolist())
         for inserted in diff_inserted:
-            constr_speed_plots(res_filename, "# of items (million)", inserted)
-            check_speed_plots(res_filename, "# of items (million)", inserted)
-            space_plots(res_filename, "# of items (million)", inserted)
+            MD["construction speed"].append(
+                (
+                    inserted,
+                    constr_speed_plots(res_filename, "# of items (million)", inserted),
+                )
+            )
+            MD["check speed"].append(
+                (
+                    inserted,
+                    check_speed_plots(res_filename, "# of items (million)", inserted),
+                )
+            )
+            MD["space"].append(
+                (inserted, space_plots(res_filename, "# of items (million)", inserted))
+            )
+        if GEN_MD:
+            print("\n\n\n")
+            for key, val in MD.items():
+                print(f"## {key}\n\n")
+                print("\n".join([x[1] for x in sorted(val, key=lambda x: x[0])]))
+                print("\n\n")
+
