@@ -28,11 +28,18 @@ BLOOM_VERSION=$(BLOOM_VERSION_MAJOR).$(BLOOM_VERSION_MINOR)
 TOP := $(shell /bin/pwd)
 BUILD_OS := $(shell uname)
 
-BUILD=$(TOP)/lib
+RM = gio trash
+
+BUILD=$(TOP)/build
 INC=-I$(TOP) -I$(TOP)/murmur2 -I$(TOP)/wyhash
 LIB=-lm 
+OPT=-O3
 COM=${CC} $(CFLAGS) $(CPPFLAGS) -Wall ${OPT} ${MM} -std=c99 -fPIC -DBLOOM_VERSION=$(BLOOM_VERSION) 
+CPPCOM=${CXX} $(CPPFLAGS) -Wall ${OPT} ${MM} -std=c++11 -fPIC -DBLOOM_VERSION=$(BLOOM_VERSION) 
+CPPCOMFORBENCH=${CXX} $(CPPFLAGS) -Wall ${OPT} ${MM} -std=c++17 -fPIC -DBLOOM_VERSION=$(BLOOM_VERSION) 
 TESTDIR=$(TOP)/misc/test
+WRAPPERTESTDIR=$(TOP)/tests
+BENCHDIR=$(TOP)/benchmark
 
 ifeq ($(BITS),)
 MM=-m64
@@ -109,9 +116,26 @@ $(BUILD)/test-perf: $(TESTDIR)/perf.c $(BUILD)/$(SO_VERSIONED)
 	(cd $(BUILD) && \
 	    $(COM) perf.o -L$(BUILD) $(RPATH) -lbloom $(LIB) -o test-perf)
 
+$(BUILD)/bf-perf: $(BENCHDIR)/benchmarks.cpp $(TOP)/bloom.c $(TOP)/murmur2/MurmurHash2.c
+	@echo "Downloading two other bloom filters"
+	cd $(BUILD) && git clone https://github.com/ArashPartow/bloom.git
+	(cd $(BUILD) && git clone https://github.com/mavam/libbf.git && cd libbf && mkdir install && \
+		./configure --prefix=../install && make && make install)
+	@echo "Downloading completed"
+	$(CPPCOMFORBENCH) -I$(TOP) -I$(TOP)/murmur2 -I$(BENCHDIR) -I$(BUILD) -I$(BUILD)/bloom -I$(BUILD)/libbf/install/include -L$(BUILD)/libbf/install/lib $^ -o $@ -lbf 
+
+$(BUILD)/bf_libbloom_org_perf: $(BENCHDIR)/benchmark_libbloom_org.cpp	
+	cd $(BUILD) && git clone https://github.com/jvirkki/libbloom.git 
+	$(CPPCOMFORBENCH) -I$(TOP) -I$(TOP)/murmur2 -I$(BENCHDIR) -I$(BUILD) -I$(BUILD)/bloom -I$(BUILD)/libbf/install/include -L$(BUILD)/libbf/install/lib $< $(BUILD)/libbloom/bloom.c  $(BUILD)/libbloom/murmur2/MurmurHash2.c -o $@ 
+
+
+
 $(BUILD)/test-basic: $(TESTDIR)/basic.c $(BUILD)/libbloom.a
 	$(COM) -I$(TOP) \
 	    $(TESTDIR)/basic.c $(BUILD)/libbloom.a $(LIB) -o $(BUILD)/test-basic
+
+$(BUILD)/test-cpp-wrapper: $(WRAPPERTESTDIR)/BloomFilterTest.cpp $(TOP)/bloom.c $(TOP)/murmur2/MurmurHash2.c 
+	$(CPPCOM) -I$(TOP) -I$(TOP)/murmur2 $^ -o $@ -lgtest_main -lgtest -lpthread
 
 $(BUILD)/%.o: %.c
 	mkdir -p $(BUILD)
@@ -131,13 +155,23 @@ wrapper_example: example/wrapper_example.cc $(BUILD)/libbloom.a
 
 
 clean:
-	rm -rf $(BUILD)
+	$(RM) -f $(BUILD)
 
-test: $(BUILD)/test-libbloom $(BUILD)/test-basic
+test: $(BUILD)/test-libbloom $(BUILD)/test-basic $(BUILD)/test-cpp-wrapper
 	$(BUILD)/test-basic
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(BUILD)
 	$(BUILD)/test-libbloom
+	$(BUILD)/test-cpp-wrapper
+	@echo "valgrind testing ..."
+	valgrind --leak-check=yes --error-exitcode=1 $(BUILD)/test-basic
+	valgrind --leak-check=yes --error-exitcode=1 $(BUILD)/test-libbloom
+	valgrind --leak-check=yes --error-exitcode=1 $(BUILD)/test-cpp-wrapper
+	@echo "tests completed"
+	
 
-perf: $(BUILD)/test-perf
+perf: $(BUILD)/test-perf $(BUILD)/bf-perf $(BUILD)/bf_libbloom_org_perf
+	$(BUILD)/bf-perf
+	$(BUILD)/bf_libbloom_org_perf
 	$(BUILD)/test-perf
 
 vtest: $(BUILD)/test-libbloom

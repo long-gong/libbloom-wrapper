@@ -126,7 +126,7 @@ int bloom_init_size(struct bloom *bloom, size_t entries, double error,
  *
  */
 int bloom_check(struct bloom *bloom, const void *buffer, int len);
-
+int bloom_check_ns(struct bloom *bloom, const void *buffer, int len);
 /** ***************************************************************************
  * Add the given element to the bloom filter.
  * The return code indicates if the element (or a collision) was already in,
@@ -146,7 +146,7 @@ int bloom_check(struct bloom *bloom, const void *buffer, int len);
  *
  */
 int bloom_add(struct bloom *bloom, const void *buffer, int len);
-
+void bloom_add_ns(struct bloom *bloom, const void *buffer, int len);
 /** ***************************************************************************
  * Print (to stdout) info about this bloom filter. Debugging aid.
  *
