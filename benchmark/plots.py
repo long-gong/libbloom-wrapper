@@ -60,7 +60,7 @@ def fpr_plots(csvfile, filter_key, filter_value):
         )
     plt.ylabel("False Positive Rate")
     plt.xlabel("Number of Inserted Items (million)")
-    plt.xticks(ind + width, ("1", "2", "5", "10", "20", "50", "100"))
+    plt.xticks(ind + width * (len(LIB_NAMES) - 1) / 2.0, ("1", "2", "5", "10", "20", "50", "100"))
     plt.legend(
         bbox_to_anchor=(0.0, 1.02, 1.0, 0.102),
         loc="lower left",
@@ -100,7 +100,7 @@ def constr_speed_plots(csvfile, filter_key, filter_value):
         )
     plt.ylabel("Construction Speed (million keys/sec)")
     plt.xlabel("Desired False Positive Rate")
-    plt.xticks(ind + width, ("$10^{-1}$", "$10^{-2}$", "$10^{-3}$", "$10^{-4}$"))
+    plt.xticks(ind + width * (len(LIB_NAMES) - 1) / 2.0, ("$10^{-1}$", "$10^{-2}$", "$10^{-3}$", "$10^{-4}$"))
     plt.legend(
         bbox_to_anchor=(0.0, 1.02, 1.0, 0.102),
         loc="lower left",
@@ -140,7 +140,7 @@ def check_speed_plots(csvfile, filter_key, filter_value):
         )
     plt.ylabel("Check Speed (million keys/sec)")
     plt.xlabel("Desired False Positive Rate")
-    plt.xticks(ind + width, ("$10^{-1}$", "$10^{-2}$", "$10^{-3}$", "$10^{-4}$"))
+    plt.xticks(ind + width * (len(LIB_NAMES) - 1) / 2.0, ("$10^{-1}$", "$10^{-2}$", "$10^{-3}$", "$10^{-4}$"))
     plt.legend(
         bbox_to_anchor=(0.0, 1.02, 1.0, 0.102),
         loc="lower left",
@@ -180,7 +180,7 @@ def space_plots(csvfile, filter_key, filter_value):
         )
     plt.ylabel("Space (bits per item)")
     plt.xlabel("Desired False Positive Rate")
-    plt.xticks(ind + width, ("$10^{-1}$", "$10^{-2}$", "$10^{-3}$", "$10^{-4}$"))
+    plt.xticks(ind + width * (len(LIB_NAMES) - 1) / 2.0, ("$10^{-1}$", "$10^{-2}$", "$10^{-3}$", "$10^{-4}$"))
     plt.legend(
         bbox_to_anchor=(0.0, 1.02, 1.0, 0.102),
         loc="lower left",
