@@ -196,7 +196,7 @@ def space_plots(csvfile, filter_key, filter_value):
     if GEN_MD:
         return (
             "+ %.0f millions (items inserted during construction)\n\t![space %i](%s)"
-            % (filter_value, figid, f"space_{figid}.svg")
+            % (filter_value, figid, f"{plot_dir}/space_{figid}.svg")
         )
 
 
