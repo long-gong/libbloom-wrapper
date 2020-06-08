@@ -1,9 +1,21 @@
 # Benchmark Results
 
-Here, we only present the results for using 64-bit unsigned integers as keys, the results for using 32-bit unsigned integers as keys can be find in [32u.md](./32u.md)
+Here, we only present the results for using 64-bit unsigned integers as keys, the results for using 32-bit unsigned integers as keys lead to the same conclusion, which can be find in [32u.md](./32u.md).
 
-## false positive rate
+## Benchmarked
 
++ [cppbloom](https://github.com/ArashPartow/bloom): C++ Bloom Filter Library 
++ [libbloom](https://github.com/jvirkki/libbloom): A simple and small bloom filter implementation in plain C
++ [libbloom-x](https://github.com/long-gong/libbloom-x): C++/Python wrapper for libbloom (with some modificatons)
++ [libbf](https://github.com/mavam/libbf): Bloom filters for C++11
+
+All algorithms are compiled with `gcc/g++ 7.5.0` with `-O3` on an Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz running Ubuntu 18.04.
+
+## Overall Preferences
+
+cppbloom > libbloom (libbloom-x) > libbf
+
+## False Positive Rate
 
 + desired fpr = 0.01%
         ![false positive rate 1](plots/64u/fpr_1.svg)
@@ -14,10 +26,7 @@ Here, we only present the results for using 64-bit unsigned integers as keys, th
 + desired fpr = 10%
         ![false positive rate 1000](plots/64u/fpr_1000.svg)
 
-
-
-## construction speed
-
+## Construction Speed
 
 + 1 millions (items inserted during construction)
         ![construction speed 1](plots/64u/constr_speed_1.svg)
@@ -34,10 +43,7 @@ Here, we only present the results for using 64-bit unsigned integers as keys, th
 + 100 millions (items inserted during construction)
         ![construction speed 100](plots/64u/constr_speed_100.svg)
 
-
-
-## check speed
-
+## Check Speed
 
 + 1 millions (items inserted during construction)
         ![check speed 1](plots/64u/check_speed_1.svg)
@@ -54,10 +60,7 @@ Here, we only present the results for using 64-bit unsigned integers as keys, th
 + 100 millions (items inserted during construction)
         ![check speed 100](plots/64u/check_speed_100.svg)
 
-
-
-## space
-
+## Space
 
 + 1 millions (items inserted during construction)
         ![space 1](plots/64u/space_1.svg)
